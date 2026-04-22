@@ -1,0 +1,161 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="page-header">
+  <div class="container">
+    <span class="section-badge">My Account</span>
+    <h1><i class="fas fa-id-card"></i> Profile & Preferences</h1>
+    <p>Keep your details updated for faster checkout and easier order tracking.</p>
+  </div>
+</section>
+
+<section class="page-shell">
+  <div class="container">
+    <div class="profile-layout">
+      <aside class="profile-card">
+        <div class="profile-card-top">
+          <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <h2><%= profile.name || 'Krishvi Herbs Member' %></h2>
+          <p><%= profile.email %></p>
+        </div>
+        <div class="profile-card-meta">
+          <div class="profile-meta-row">
+            <small>Account Type</small>
+            <strong><%= profile.role === 'admin' ? 'Admin' : 'User' %></strong>
+          </div>
+          <div class="profile-meta-row">
+            <small>Phone</small>
+            <span><%= profile.mobile || 'Add your mobile number for quicker checkout' %></span>
+          </div>
+          <div class="profile-meta-row">
+            <small>Member Since</small>
+            <span><%= new Date(profile.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+          </div>
+          <a href="/my-orders" class="btn btn-outline btn-block"><i class="fas fa-box"></i> View All Orders</a>
+          <% if (profile.role === 'admin') { %>
+            <a href="/admin" class="btn btn-primary btn-block"><i class="fas fa-shield-alt"></i> Open Admin Panel</a>
+          <% } %>
+        </div>
+      </aside>
+
+      <div class="profile-main">
+        <div class="profile-panel">
+          <div class="profile-panel-header">
+            <h2>Account Snapshot</h2>
+            <p>Your recent activity at a glance.</p>
+          </div>
+          <div class="profile-panel-body">
+            <div class="profile-stats">
+              <div class="profile-stat">
+                <strong><%= stats.totalOrders %></strong>
+                <span>Total orders placed</span>
+              </div>
+              <div class="profile-stat">
+                <strong>₹<%= stats.totalSpent %></strong>
+                <span>Total amount spent</span>
+              </div>
+              <div class="profile-stat">
+                <strong><%= stats.activeOrders %></strong>
+                <span>Orders in progress</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-panel">
+          <div class="profile-panel-header">
+            <h2>Edit Profile</h2>
+            <p>These details will be used to make checkout smoother next time.</p>
+          </div>
+          <div class="profile-panel-body">
+            <form method="POST" action="/profile">
+              <div class="profile-form-grid">
+                <div class="form-group">
+                  <label for="name">Full Name</label>
+                  <input id="name" name="name" type="text" value="<%= profile.name || '' %>" placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                  <label for="mobile">Mobile Number</label>
+                  <input id="mobile" name="mobile" type="tel" value="<%= profile.mobile || '' %>" placeholder="10-digit mobile number" maxlength="10">
+                </div>
+                <div class="form-group full">
+                  <label for="address">Address</label>
+                  <textarea id="address" name="address" rows="4" placeholder="House no, street, locality"><%= profile.address?.address || '' %></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="city">City</label>
+                  <input id="city" name="city" type="text" value="<%= profile.address?.city || '' %>" placeholder="City">
+                </div>
+                <div class="form-group">
+                  <label for="state">State</label>
+                  <input id="state" name="state" type="text" value="<%= profile.address?.state || '' %>" placeholder="State">
+                </div>
+                <div class="form-group">
+                  <label for="pincode">Pincode</label>
+                  <input id="pincode" name="pincode" type="text" value="<%= profile.address?.pincode || '' %>" placeholder="6-digit pincode" maxlength="6">
+                </div>
+                <div class="form-group">
+                  <label for="email">Email Address</label>
+                  <input id="email" type="email" value="<%= profile.email %>" disabled>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-lg" type="submit"><i class="fas fa-save"></i> Save Profile</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="profile-panel">
+          <div class="profile-panel-header">
+            <h2>Recent Orders</h2>
+            <p>Track your latest purchases and delivery progress.</p>
+          </div>
+          <div class="profile-panel-body">
+            <% if (orders.length === 0) { %>
+              <div class="cart-empty">
+                <div class="empty-icon">
+                  <i class="fas fa-seedling"></i>
+                </div>
+                <h2>No orders yet</h2>
+                <p>Your recent orders will appear here once you place one.</p>
+                <a href="/products" class="btn btn-primary">Browse Products</a>
+              </div>
+            <% } else { %>
+              <div class="profile-orders">
+                <% orders.forEach(function(order) { %>
+                  <div class="profile-order-card">
+                    <div class="profile-order-meta">
+                      <strong>#<%= order._id.toString().slice(-8).toUpperCase() %></strong>
+                      <span><%= new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %> • <%= order.items.length %> item(s)</span>
+                    </div>
+                    <div class="profile-order-right">
+                      <span class="status-badge status-<%= order.orderStatus %>">
+                        <%= order.orderStatus.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
+                      </span>
+                      <div><strong>₹<%= order.totalAmount %></strong></div>
+                      <a href="/order/track/<%= order._id %>" class="btn btn-sm btn-outline">Track Order</a>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('saved') === '1') {
+      showToast('Your profile has been updated successfully.', 'success');
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

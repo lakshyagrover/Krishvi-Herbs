@@ -1,0 +1,92 @@
+    </div><!-- /.panel-content -->
+  </main>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // Sidebar toggle
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // Toast
+    function showToast(msg, type = 'info') {
+      const c = document.getElementById('toastContainer');
+      const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+      const t = document.createElement('div');
+      t.className = 'toast toast-' + type;
+      t.innerHTML = '<i class="fas ' + (icons[type]||icons.info) + '"></i><span>' + msg + '</span>';
+      c.appendChild(t);
+      setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, 3000);
+    }
+
+    // Confirm delete
+    async function confirmDelete(url, itemName) {
+      if (!confirm('Are you sure you want to delete "' + itemName + '"? This cannot be undone.')) return;
+      try {
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const data = await res.json();
+        if (data.success) { showToast('Deleted successfully', 'success'); setTimeout(() => location.reload(), 800); }
+        else showToast(data.message || 'Delete failed', 'error');
+      } catch { showToast('Something went wrong', 'error'); }
+    }
+
+    // Update status
+    async function updateStatus(url, orderStatus, existingReason = '') {
+      console.log('updateStatus called:', { url, orderStatus, existingReason });
+      try {
+        const payload = { orderStatus };
+        if (orderStatus === 'cancelled') {
+          const reason = prompt('Enter the cancellation reason for the customer:', existingReason || '');
+          if (reason === null) {
+            console.log('Cancellation cancelled by user');
+            return;
+          }
+
+          if (!reason.trim()) {
+            showToast('Cancellation reason is required.', 'error');
+            return;
+          }
+
+          payload.cancellationReason = reason.trim();
+        }
+
+        console.log('Sending payload:', payload);
+        const res = await fetch(url, {
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        console.log('Response data:', data);
+        
+        if (res.ok && data.success) { 
+          showToast(data.message || 'Status updated!', 'success'); 
+          setTimeout(() => location.reload(), 1500); 
+        } else {
+          showToast(data.message || 'Update failed', 'error');
+          // No immediate reload here, let them see the error
+        }
+      } catch (err) { 
+        console.error('Status update error:', err);
+        showToast('Something went wrong: ' + err.message, 'error');
+      }
+    }
+
+    // Update role
+    async function updateRole(url, role) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role })
+        });
+        const data = await res.json();
+        if (data.success) showToast('Role updated!', 'success');
+        else showToast(data.message || 'Update failed', 'error');
+      } catch { showToast('Something went wrong', 'error'); }
+    }
+  </script>
+</body>
+</html>

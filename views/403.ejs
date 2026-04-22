@@ -1,0 +1,17 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="section">
+  <div class="container">
+    <div class="cart-empty">
+      <div class="empty-icon">
+        <i class="fas fa-ban" style="color: #e74c3c;"></i>
+      </div>
+      <h2>Access Denied</h2>
+      <p><%= message || 'You do not have permission to access this page.' %></p>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

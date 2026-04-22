@@ -1,0 +1,77 @@
+<%
+  var panelTitle = 'Order Detail';
+  var panelRole = 'Admin';
+  var pageTitle = 'Order #' + order._id.toString().slice(-8).toUpperCase();
+  var baseUrl = '/admin';
+  var sidebarLinks = [
+    { href: '/admin', icon: 'fa-tachometer-alt', label: 'Dashboard', key: 'dashboard' },
+    { href: '/admin/analytics', icon: 'fa-chart-line', label: 'Analytics', key: 'analytics' },
+    { href: '/admin/products', icon: 'fa-box', label: 'Products', key: 'products' },
+    { href: '/admin/orders', icon: 'fa-shopping-bag', label: 'Orders', key: 'orders' },
+    { href: '/admin/users', icon: 'fa-users', label: 'Users', key: 'users' }
+  ];
+  var statusList = ['placed','confirmed','shipped','out_for_delivery','delivered','cancelled'];
+%>
+<%- include('../partials/panel-header', { panelTitle, panelRole, pageTitle, sidebarLinks, page }) %>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+  <div>
+    <div class="panel-card" style="margin-bottom:20px;">
+      <div class="panel-card-header">
+        <h2><i class="fas fa-info-circle"></i> Order Info</h2>
+        <a href="<%= baseUrl %>/orders" class="btn btn-sm btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+      </div>
+      <div class="panel-card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+          <div><small style="color:#999;">Tracking ID</small><br><strong><%= order.trackingId %></strong></div>
+          <div><small style="color:#999;">Payment</small><br><span class="badge badge-<%= order.paymentStatus %>"><%= order.paymentStatus %></span></div>
+          <div>
+            <small style="color:#999;">Status</small><br>
+            <select class="status-select" 
+                    data-url="<%= baseUrl %>/orders/<%= order._id %>/status"
+                    data-reason="<%= order.cancellationReason || '' %>"
+                    onchange="updateStatus(this.dataset.url, this.value, this.dataset.reason)">
+              <% statusList.forEach(function(s) { %>
+                <option value="<%= s %>" <%= order.orderStatus === s ? 'selected' : '' %>><%= s.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div><small style="color:#999;">Date</small><br><%= new Date(order.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) %></div>
+          <div><small style="color:#999;">Amount</small><br><strong style="font-size:1.2rem;">₹<%= order.totalAmount %></strong></div>
+          <% if (order.cancelled) { %>
+            <div><small style="color:#999;">Cancellation Reason</small><br><span class="badge badge-cancelled"><%= order.cancellationReason || 'No reason provided' %></span></div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-card-header"><h2><i class="fas fa-shopping-bag"></i> Items (<%= order.items.length %>)</h2></div>
+      <div class="panel-card-body">
+        <% order.items.forEach(function(item) { %>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0ef;">
+            <img src="<%= item.image %>" style="width:48px;height:48px;border-radius:8px;object-fit:cover;" />
+            <div style="flex:1;"><strong><%= item.name %></strong><br><small style="color:#999;">Qty: <%= item.quantity %> × ₹<%= item.price %></small></div>
+            <strong>₹<%= item.price * item.quantity %></strong>
+          </div>
+        <% }); %>
+        <div style="text-align:right;padding-top:12px;font-size:1.1rem;"><strong>Total: ₹<%= order.totalAmount %></strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel-card">
+      <div class="panel-card-header"><h2><i class="fas fa-map-pin"></i> Shipping</h2></div>
+      <div class="panel-card-body" style="line-height:1.8;color:#666;">
+        <strong style="color:#2c2c2c;"><%= order.shippingAddress.name %></strong><br>
+        📱 +91 <%= order.shippingAddress.mobile %><br>
+        📍 <%= order.shippingAddress.address %><br>
+        <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %><br>
+        PIN: <%= order.shippingAddress.pincode %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/panel-footer') %>

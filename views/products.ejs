@@ -1,0 +1,59 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="page-header">
+  <div class="container">
+    <span class="section-badge">Our Collection</span>
+    <h1>All Products</h1>
+    <p>Handcrafted Ayurvedic skincare for naturally radiant skin.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="products-grid">
+      <% products.forEach(function(product) { %>
+        <div class="product-card <%= !product.inStock ? 'out-of-stock' : '' %>" data-product-id="<%= product._id %>">
+          <div class="product-card-image">
+            <img src="<%= product.image %>" alt="<%= product.name %>" loading="lazy" />
+            <% if (!product.inStock) { %>
+              <span class="product-badge badge-out">Out of Stock</span>
+            <% } else if (product.originalPrice) { %>
+              <span class="product-badge">Save ₹<%= product.originalPrice - product.price %></span>
+            <% } %>
+            <div class="product-card-overlay">
+              <a href="/products/<%= product.slug %>" class="btn btn-sm btn-white">View Details</a>
+            </div>
+          </div>
+          <div class="product-card-body">
+            <h3><a href="/products/<%= product.slug %>"><%= product.name %></a></h3>
+            <p><%= product.shortDescription %></p>
+            <div class="product-card-footer">
+              <div class="product-price">
+                <span class="price-current">₹<%= product.price %></span>
+                <% if (product.originalPrice) { %>
+                  <span class="price-original">₹<%= product.originalPrice %></span>
+                <% } %>
+              </div>
+              <% if (product.inStock) { %>
+                <button class="btn btn-primary btn-sm add-to-cart-btn"
+                  data-id="<%= product._id %>"
+                  data-name="<%= product.name %>"
+                  data-price="<%= product.price %>"
+                  data-image="<%= product.image %>">
+                  <i class="fas fa-plus"></i> Add
+                </button>
+              <% } else { %>
+                <button class="btn btn-sm" disabled style="background: #ccc; color: #666; cursor: not-allowed;">
+                  Out of Stock
+                </button>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

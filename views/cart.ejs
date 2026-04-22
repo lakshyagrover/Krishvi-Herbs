@@ -1,0 +1,131 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fas fa-shopping-bag"></i> Your Cart</h1>
+  </div>
+</section>
+
+<section class="section cart-section">
+  <div class="container">
+    <!-- Empty Cart -->
+    <div class="cart-empty" id="cartEmpty" style="display:none;">
+      <div class="empty-icon">
+        <i class="fas fa-shopping-bag"></i>
+      </div>
+      <h2>Your cart is empty</h2>
+      <p>Looks like you haven't added any products yet.</p>
+      <a href="/products" class="btn btn-primary">Browse Products</a>
+    </div>
+
+    <!-- Cart Content -->
+    <div class="cart-content" id="cartContent" style="display:none;">
+      <div class="cart-grid">
+        <div class="cart-items" id="cartItems">
+          <!-- Cart items rendered by JS -->
+        </div>
+
+        <div class="cart-summary">
+          <div class="cart-summary-card">
+            <h3>Order Summary</h3>
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span id="cartSubtotal">₹0</span>
+            </div>
+            <div class="summary-row">
+              <span>Shipping</span>
+              <span class="text-success">FREE</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row summary-total">
+              <span>Total</span>
+              <span id="cartTotal">₹0</span>
+            </div>
+            <a href="/checkout" class="btn btn-primary btn-block" id="checkoutBtn">
+              Proceed to Checkout <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="/products" class="btn btn-outline btn-block">Continue Shopping</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    renderCartPage();
+  });
+
+  function renderCartPage() {
+    const cart = getCart();
+    const cartEmpty = document.getElementById('cartEmpty');
+    const cartContent = document.getElementById('cartContent');
+    const cartItems = document.getElementById('cartItems');
+
+    if (cart.length === 0) {
+      cartEmpty.style.display = 'block';
+      cartContent.style.display = 'none';
+      return;
+    }
+
+    cartEmpty.style.display = 'none';
+    cartContent.style.display = 'block';
+
+    cartItems.innerHTML = cart.map(item => {
+      const cartKey = item.variant ? `${item.id}-${item.variant}` : item.id;
+      const variantDisplay = item.variant ? `<span class="cart-item-variant">${item.variant}</span>` : '';
+      return `
+      <div class="cart-item" data-id="${cartKey}">
+        <div class="cart-item-image">
+          <img src="${item.image}" alt="${item.name}" />
+        </div>
+        <div class="cart-item-details">
+          <h3>${item.name}</h3>
+          ${variantDisplay}
+          <p class="cart-item-price">₹${item.price}</p>
+        </div>
+        <div class="cart-item-actions">
+          <div class="quantity-control quantity-sm">
+            <button class="qty-btn" onclick="updateCartQty('${cartKey}', -1)">−</button>
+            <span class="qty-value">${item.quantity}</span>
+            <button class="qty-btn" onclick="updateCartQty('${cartKey}', 1)">+</button>
+          </div>
+          <p class="cart-item-total">₹${item.price * item.quantity}</p>
+          <button class="cart-remove-btn" onclick="removeFromCart('${cartKey}')">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+    `}).join('');
+
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    document.getElementById('cartSubtotal').textContent = '₹' + total;
+    document.getElementById('cartTotal').textContent = '₹' + total;
+  }
+
+  function updateCartQty(cartKey, delta) {
+    let cart = getCart();
+    const item = cart.find(i => (i.variant ? `${i.id}-${i.variant}` : i.id) === cartKey);
+    if (item) {
+      item.quantity += delta;
+      if (item.quantity <= 0) {
+        cart = cart.filter(i => (i.variant ? `${i.id}-${i.variant}` : i.id) !== cartKey);
+      }
+      saveCart(cart);
+      renderCartPage();
+      updateCartBadge();
+    }
+  }
+
+  function removeFromCart(cartKey) {
+    let cart = getCart().filter(i => (i.variant ? `${i.id}-${i.variant}` : i.id) !== cartKey);
+    saveCart(cart);
+    renderCartPage();
+    updateCartBadge();
+    showToast('Item removed from cart', 'info');
+  }
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,183 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="auth-section">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-icon">
+          <i class="fas fa-leaf"></i>
+        </div>
+        <h1>Welcome to Krishvi Herbs</h1>
+        <p>Login with your email address to continue</p>
+      </div>
+
+      <!-- Step 1: Email -->
+      <div class="auth-step active" id="step-email">
+        <div class="form-group">
+          <label for="emailInput">Email Address</label>
+          <div class="input-with-icon">
+            <span class="input-prefix"><i class="fas fa-envelope"></i></span>
+            <input type="email" id="emailInput" placeholder="Enter your email" />
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" id="sendOtpBtn">
+          <span>Send OTP</span>
+          <div class="btn-loader" style="display:none;"><i class="fas fa-spinner fa-spin"></i></div>
+        </button>
+      </div>
+
+      <!-- Step 2: OTP Verification -->
+      <div class="auth-step" id="step-otp">
+        <p class="otp-info">We've sent an OTP to <strong id="otpEmailDisplay"></strong></p>
+        <div class="form-group">
+          <label for="otpInput">Enter OTP</label>
+          <div class="otp-inputs">
+            <input type="text" class="otp-digit" maxlength="1" data-index="0" />
+            <input type="text" class="otp-digit" maxlength="1" data-index="1" />
+            <input type="text" class="otp-digit" maxlength="1" data-index="2" />
+            <input type="text" class="otp-digit" maxlength="1" data-index="3" />
+          </div>
+          <input type="hidden" id="otpInput" />
+        </div>
+        <button class="btn btn-primary btn-block" id="verifyOtpBtn">
+          <span>Verify & Login</span>
+          <div class="btn-loader" style="display:none;"><i class="fas fa-spinner fa-spin"></i></div>
+        </button>
+        <p class="auth-resend">
+          Didn't receive? <button class="link-btn" id="resendOtpBtn">Resend OTP</button>
+        </p>
+        <button class="link-btn" id="changeEmailBtn"><i class="fas fa-arrow-left"></i> Change email</button>
+      </div>
+
+      <div class="auth-hint">
+        <i class="fas fa-envelope-open-text"></i> We will send a 4-digit OTP to your email
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const stepEmail = document.getElementById('step-email');
+    const stepOtp = document.getElementById('step-otp');
+    const emailInput = document.getElementById('emailInput');
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    const resendOtpBtn = document.getElementById('resendOtpBtn');
+    const changeEmailBtn = document.getElementById('changeEmailBtn');
+    const otpEmailDisplay = document.getElementById('otpEmailDisplay');
+    const otpDigits = document.querySelectorAll('.otp-digit');
+    const redirect = '<%= redirect %>';
+
+    let email = '';
+
+    // OTP digit inputs — auto-advance
+    otpDigits.forEach((input, i) => {
+      input.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (val && i < otpDigits.length - 1) {
+          otpDigits[i + 1].focus();
+        }
+        // Update hidden input
+        document.getElementById('otpInput').value = Array.from(otpDigits).map(d => d.value).join('');
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && i > 0) {
+          otpDigits[i - 1].focus();
+        }
+      });
+    });
+
+    // Send OTP
+    sendOtpBtn.addEventListener('click', async () => {
+      email = emailInput.value.trim();
+      if (!email || !/\S+@\S+\.\S+/.test(email)) {
+        showToast('Please enter a valid email address', 'error');
+        return;
+      }
+
+      setLoading(sendOtpBtn, true);
+      try {
+        const res = await fetch('/auth/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast(data.message, 'success');
+          otpEmailDisplay.textContent = email;
+          stepEmail.classList.remove('active');
+          stepOtp.classList.add('active');
+          otpDigits[0].focus();
+          document.querySelector('.auth-hint').innerHTML = '<i class="fas fa-envelope-open-text"></i> OTP sent successfully! Please check your inbox.';
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (err) {
+        showToast('Something went wrong', 'error');
+      }
+      setLoading(sendOtpBtn, false);
+    });
+
+    // Verify OTP
+    verifyOtpBtn.addEventListener('click', async () => {
+      const otp = document.getElementById('otpInput').value;
+      if (otp.length !== 4) {
+        showToast('Please enter 4-digit OTP', 'error');
+        return;
+      }
+
+      setLoading(verifyOtpBtn, true);
+      try {
+        const res = await fetch('/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast('Login successful! Redirecting...', 'success');
+          setTimeout(() => {
+            // Use role-based redirect if no explicit redirect was set
+            const finalRedirect = (redirect && redirect !== '/') ? redirect : (data.redirectUrl || '/');
+            window.location.href = finalRedirect;
+          }, 1000);
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (err) {
+        showToast('Something went wrong', 'error');
+      }
+      setLoading(verifyOtpBtn, false);
+    });
+
+    // Resend
+    resendOtpBtn.addEventListener('click', () => sendOtpBtn.click());
+
+    // Change email
+    changeEmailBtn.addEventListener('click', () => {
+      stepOtp.classList.remove('active');
+      stepEmail.classList.add('active');
+      otpDigits.forEach(d => d.value = '');
+      emailInput.focus();
+      document.querySelector('.auth-hint').innerHTML = '<i class="fas fa-envelope-open-text"></i> We will send a 4-digit OTP to your email';
+    });
+
+    // Enter key
+    emailInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendOtpBtn.click();
+    });
+
+    function setLoading(btn, loading) {
+      btn.querySelector('span').style.display = loading ? 'none' : 'inline';
+      btn.querySelector('.btn-loader').style.display = loading ? 'inline-block' : 'none';
+      btn.disabled = loading;
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

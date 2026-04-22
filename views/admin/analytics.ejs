@@ -1,0 +1,178 @@
+<%
+  var panelTitle = 'Admin — Analytics';
+  var panelRole = 'Admin';
+  var pageTitle = 'Business Analytics';
+  var sidebarLinks = [
+    { href: '/admin', icon: 'fa-tachometer-alt', label: 'Dashboard', key: 'dashboard' },
+    { href: '/admin/analytics', icon: 'fa-chart-line', label: 'Analytics', key: 'analytics' },
+    { href: '/admin/products', icon: 'fa-box', label: 'Products', key: 'products' },
+    { href: '/admin/orders', icon: 'fa-shopping-bag', label: 'Orders', key: 'orders' },
+    { href: '/admin/users', icon: 'fa-users', label: 'Users', key: 'users' }
+  ];
+%>
+<%- include('../partials/panel-header', { panelTitle, panelRole, pageTitle, sidebarLinks, page }) %>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#e8f5e0;color:#2d5016;"><i class="fas fa-rupee-sign"></i></div>
+    <div><span class="value">₹<%= totalRevenue.toLocaleString('en-IN') %></span><span class="label">Total Revenue</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#fff3cd;color:#856404;"><i class="fas fa-shopping-bag"></i></div>
+    <div><span class="value"><%= totalOrders %></span><span class="label">Total Orders</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#cce5ff;color:#004085;"><i class="fas fa-credit-card"></i></div>
+    <div><span class="value"><%= paidOrders %></span><span class="label">Online Paid</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#d4edda;color:#155724;"><i class="fas fa-money-bill-wave"></i></div>
+    <div><span class="value"><%= codOrders %></span><span class="label">COD Orders</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#fce4ec;color:#c62828;"><i class="fas fa-times-circle"></i></div>
+    <div><span class="value"><%= cancelledOrders %></span><span class="label">Cancelled</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#d1ecf1;color:#0c5460;"><i class="fas fa-users"></i></div>
+    <div><span class="value"><%= activeUsers %></span><span class="label">Total Users</span></div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+  <div class="panel-card">
+    <div class="panel-card-header"><h2><i class="fas fa-chart-line"></i> Revenue (Last 30 Days)</h2></div>
+    <div class="panel-card-body"><canvas id="dailyRevenueChart" height="280"></canvas></div>
+  </div>
+  <div class="panel-card">
+    <div class="panel-card-header"><h2><i class="fas fa-chart-bar"></i> Orders (Last 30 Days)</h2></div>
+    <div class="panel-card-body"><canvas id="dailyOrdersChart" height="280"></canvas></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+  <div class="panel-card">
+    <div class="panel-card-header"><h2><i class="fas fa-chart-area"></i> Monthly Revenue</h2></div>
+    <div class="panel-card-body"><canvas id="monthlyChart" height="280"></canvas></div>
+  </div>
+  <div class="panel-card">
+    <div class="panel-card-header"><h2><i class="fas fa-chart-bar"></i> Weekly Orders</h2></div>
+    <div class="panel-card-body"><canvas id="weeklyChart" height="280"></canvas></div>
+  </div>
+</div>
+
+<!-- Low Stock Alert -->
+<% if (lowStockProducts.length > 0) { %>
+<div class="panel-card">
+  <div class="panel-card-header">
+    <h2 style="color:#c62828;"><i class="fas fa-exclamation-triangle"></i> Low Stock Alert (<%= lowStockProducts.length %>)</h2>
+  </div>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <thead><tr><th>Product</th><th>Current Stock</th><th>Action</th></tr></thead>
+      <tbody>
+        <% lowStockProducts.forEach(function(p) { %>
+          <tr>
+            <td><strong><%= p.name %></strong></td>
+            <td><span class="badge badge-cancelled" style="font-size:0.85rem;"><%= p.stock %> left</span></td>
+            <td><a href="/admin/products/edit/<%= p._id %>" class="btn btn-xs btn-outline">Update Stock</a></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const dailySales = <%- dailySales %>;
+  const weeklySales = <%- weeklySales %>;
+  const monthlySales = <%- monthlySales %>;
+
+  const chartColors = {
+    green: 'rgba(45,80,22,0.8)',
+    greenBg: 'rgba(45,80,22,0.1)',
+    orange: 'rgba(255,152,0,0.8)',
+    orangeBg: 'rgba(255,152,0,0.1)',
+    purple: 'rgba(107,33,168,0.8)',
+    purpleBg: 'rgba(107,33,168,0.1)',
+    blue: 'rgba(0,64,133,0.8)',
+    blueBg: 'rgba(0,64,133,0.1)'
+  };
+
+  const defaultOpts = {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+      x: { grid: { display: false } }
+    }
+  };
+
+  // Daily Revenue
+  new Chart(document.getElementById('dailyRevenueChart'), {
+    type: 'line',
+    data: {
+      labels: dailySales.map(d => d.label),
+      datasets: [{
+        label: 'Revenue (₹)',
+        data: dailySales.map(d => d.revenue),
+        borderColor: chartColors.green,
+        backgroundColor: chartColors.greenBg,
+        fill: true, tension: 0.4, pointRadius: 2
+      }]
+    },
+    options: defaultOpts
+  });
+
+  // Daily Orders
+  new Chart(document.getElementById('dailyOrdersChart'), {
+    type: 'bar',
+    data: {
+      labels: dailySales.map(d => d.label),
+      datasets: [{
+        label: 'Orders',
+        data: dailySales.map(d => d.orders),
+        backgroundColor: chartColors.orange,
+        borderRadius: 4
+      }]
+    },
+    options: defaultOpts
+  });
+
+  // Monthly Revenue
+  new Chart(document.getElementById('monthlyChart'), {
+    type: 'line',
+    data: {
+      labels: monthlySales.map(d => d.label),
+      datasets: [{
+        label: 'Revenue (₹)',
+        data: monthlySales.map(d => d.revenue),
+        borderColor: chartColors.purple,
+        backgroundColor: chartColors.purpleBg,
+        fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: chartColors.purple
+      }]
+    },
+    options: defaultOpts
+  });
+
+  // Weekly Orders
+  new Chart(document.getElementById('weeklyChart'), {
+    type: 'bar',
+    data: {
+      labels: weeklySales.map(d => d.label),
+      datasets: [{
+        label: 'Orders',
+        data: weeklySales.map(d => d.orders),
+        backgroundColor: chartColors.blue,
+        borderRadius: 4
+      }]
+    },
+    options: defaultOpts
+  });
+</script>
+
+<%- include('../partials/panel-footer') %>

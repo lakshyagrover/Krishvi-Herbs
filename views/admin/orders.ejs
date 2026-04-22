@@ -1,0 +1,61 @@
+<%
+  var panelTitle = 'Admin — Orders';
+  var panelRole = 'Admin';
+  var pageTitle = 'Order Management';
+  var sidebarLinks = [
+    { href: '/admin', icon: 'fa-tachometer-alt', label: 'Dashboard', key: 'dashboard' },
+    { href: '/admin/analytics', icon: 'fa-chart-line', label: 'Analytics', key: 'analytics' },
+    { href: '/admin/products', icon: 'fa-box', label: 'Products', key: 'products' },
+    { href: '/admin/orders', icon: 'fa-shopping-bag', label: 'Orders', key: 'orders' },
+    { href: '/admin/users', icon: 'fa-users', label: 'Users', key: 'users' }
+  ];
+%>
+<%- include('../partials/panel-header', { panelTitle, panelRole, pageTitle, sidebarLinks, page }) %>
+
+<div class="panel-card">
+  <div class="panel-card-header">
+    <h2><i class="fas fa-shopping-bag"></i> Orders</h2>
+    <div class="filter-bar">
+      <a href="/admin/orders" class="filter-btn <%= currentFilter === 'all' ? 'active' : '' %>">All</a>
+      <a href="/admin/orders?status=placed" class="filter-btn <%= currentFilter === 'placed' ? 'active' : '' %>">New</a>
+      <a href="/admin/orders?status=shipped" class="filter-btn <%= currentFilter === 'shipped' ? 'active' : '' %>">Shipped</a>
+      <a href="/admin/orders?status=delivered" class="filter-btn <%= currentFilter === 'delivered' ? 'active' : '' %>">Delivered</a>
+      <a href="/admin/orders?status=cancelled" class="filter-btn <%= currentFilter === 'cancelled' ? 'active' : '' %>">Cancelled</a>
+    </div>
+  </div>
+  <% if (orders.length === 0) { %>
+    <div class="panel-empty"><i class="fas fa-inbox"></i><p>No orders found</p></div>
+  <% } else { %>
+    <div class="panel-table-wrap">
+      <table class="panel-table">
+        <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% orders.forEach(function(o) { %>
+            <tr>
+              <td><strong>#<%= o._id.toString().slice(-8).toUpperCase() %></strong></td>
+              <td><%= o.shippingAddress.name %><br><small style="color:#999"><%= o.shippingAddress.mobile %></small></td>
+              <td><%= o.items.length %></td>
+              <td><strong>₹<%= o.totalAmount %></strong></td>
+              <td><span class="badge badge-<%= o.paymentStatus %>"><%= o.paymentStatus %></span></td>
+              <td>
+                <select class="status-select" 
+                        data-url="/admin/orders/<%= o._id %>/status"
+                        data-reason="<%= o.cancellationReason || '' %>"
+                        onchange="updateStatus(this.dataset.url, this.value, this.dataset.reason)">
+                  <% ['placed','confirmed','shipped','out_for_delivery','delivered','cancelled'].forEach(function(s) { %>
+                    <option value="<%= s %>" <%= o.orderStatus === s ? 'selected' : '' %>><%= s.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) %></option>
+                  <% }); %>
+                </select>
+              </td>
+              <td><small><%= new Date(o.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %></small></td>
+              <td><a href="/admin/orders/<%= o._id %>" class="btn btn-xs btn-outline">View</a></td>
+            </tr>
+          <% }); %>
+
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/panel-footer') %>

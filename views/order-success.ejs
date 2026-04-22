@@ -1,0 +1,112 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="section order-success-section">
+  <div class="container">
+    <div class="success-card">
+      <div class="success-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h1>Order Placed Successfully!</h1>
+      <p class="success-subtitle">Thank you for shopping with Krishvi Herbs 🌿</p>
+
+      <div class="order-details-card">
+        <div class="order-detail-row">
+          <span>Order ID</span>
+          <strong>#<%= order._id.toString().slice(-8).toUpperCase() %></strong>
+        </div>
+        <div class="order-detail-row">
+          <span>Tracking ID</span>
+          <strong><%= order.trackingId %></strong>
+        </div>
+        <div class="order-detail-row">
+          <span>Total Amount</span>
+          <strong>₹<%= order.totalAmount %></strong>
+        </div>
+        <div class="order-detail-row">
+          <span>Payment</span>
+          <span class="status-badge status-<%= order.paymentStatus %>">
+            <%= order.paymentStatus === 'cod' ? 'Cash on Delivery' : order.paymentStatus === 'paid' ? 'Paid' : 'Pending' %>
+          </span>
+        </div>
+        <div class="order-detail-row">
+          <span>Status</span>
+          <span class="status-badge status-placed">Order Placed</span>
+        </div>
+      </div>
+
+      <div class="order-items-summary">
+        <h3>Items Ordered</h3>
+        <% order.items.forEach(function(item) { %>
+          <div class="order-item-row">
+            <img src="<%= item.image %>" alt="<%= item.name %>" />
+            <div>
+              <p><%= item.name %></p>
+              <span>Qty: <%= item.quantity %> × ₹<%= item.price %></span>
+            </div>
+            <strong>₹<%= item.price * item.quantity %></strong>
+          </div>
+        <% }); %>
+      </div>
+
+      <div class="success-actions">
+        <% if (order.orderStatus === 'placed' || order.orderStatus === 'confirmed') { %>
+          <button class="btn btn-danger btn-lg" onclick="cancelOrder('<%= order._id %>', this)">
+            <i class="fas fa-times"></i> Cancel Order
+          </button>
+        <% } %>
+        <a href="/order/track/<%= order._id %>" class="btn btn-primary btn-lg">
+          <i class="fas fa-map-marker-alt"></i> Track Order
+        </a>
+        <a href="/my-orders" class="btn btn-outline btn-lg">
+          <i class="fas fa-box"></i> My Orders
+        </a>
+        <a href="/products" class="btn btn-ghost">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    showToast('Your order was placed successfully.', 'success');
+  });
+
+  async function cancelOrder(orderId, btn) {
+    const confirmed = await showConfirm({
+      title: 'Cancel Order?',
+      message: 'Are you sure you want to cancel this order? This action cannot be undone.',
+      confirmText: 'Yes, Cancel Order',
+      cancelText: 'No, Keep it'
+    });
+
+    if (!confirmed) return;
+    
+    // Add loading state
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+
+    try {
+      const res = await fetch('/order/cancel/' + orderId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Order cancelled successfully!', 'success');
+        setTimeout(() => window.location.href = '/my-orders', 1500);
+      } else {
+        showToast(data.message || 'Failed to cancel order', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+      }
+    } catch (err) {
+      showToast('Error cancelling order', 'error');
+      btn.disabled = false;
+      btn.innerHTML = originalContent;
+    }
+  }
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,305 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="product-detail-section">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="/">Home</a> <i class="fas fa-chevron-right"></i>
+      <a href="/products">Products</a> <i class="fas fa-chevron-right"></i>
+      <span><%= product.name %></span>
+    </div>
+
+    <div class="product-detail-grid">
+      <!-- Product Image -->
+      <div class="product-detail-image">
+        <div class="product-image-main">
+          <img src="<%= product.image %>" alt="<%= product.name %>" id="mainImage" />
+          <% if (product.originalPrice) { %>
+            <span class="product-badge badge-lg">
+              <%= Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) %>% OFF
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div class="product-detail-info">
+        <span class="product-category"><i class="fas fa-leaf"></i> Ayurvedic Skincare</span>
+        <h1><%= product.name %></h1>
+
+        <div class="product-rating">
+          <div class="stars">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star-half-alt"></i>
+          </div>
+          <span>4.5 (120+ reviews)</span>
+        </div>
+
+        <div class="product-detail-price">
+          <span class="price-current">₹<%= product.price %></span>
+          <% if (product.originalPrice) { %>
+            <span class="price-original">₹<%= product.originalPrice %></span>
+            <span class="price-save">You save ₹<%= product.originalPrice - product.price %></span>
+          <% } %>
+        </div>
+
+        <p class="product-detail-desc"><%= product.description %></p>
+
+        <div class="product-meta">
+          <div class="meta-item">
+            <i class="fas fa-weight-hanging"></i>
+            <span>Net Wt: <%= product.weight %></span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-check-circle"></i>
+            <span><%= product.inStock ? 'In Stock' : 'Out of Stock' %></span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-cubes"></i>
+            <span id="stockDisplay">
+              <% if (product.inStock && product.stock > 0) { %>
+                <%= product.stock %> available
+              <% } else { %>
+                Out of Stock
+              <% } %>
+            </span>
+          </div>
+        </div>
+
+        <% if (product.variants && product.variants.length > 0) { %>
+        <!-- Variant Selector -->
+        <div class="product-variants" style="margin:20px 0;">
+          <label style="font-weight:600;margin-bottom:8px;display:block;">Choose Size:</label>
+          <div class="variant-options" style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button type="button" class="variant-btn <%= (product.stock > 0 && product.inStock) ? 'active' : 'out-of-stock' %>"
+              data-variant=""
+              data-price="<%= product.price %>"
+              data-original="<%= product.originalPrice || '' %>"
+              data-stock="<%= product.stock %>"
+              <%= (product.stock <= 0 || !product.inStock) ? 'disabled' : '' %>
+              style="padding:10px 20px;border:2px solid <%= (product.stock > 0 && product.inStock) ? '#2d5016' : '#ddd' %>;border-radius:8px;background:<%= (product.stock > 0 && product.inStock) ? '#f0fdf4' : '#f9f9f9' %>;color:<%= (product.stock > 0 && product.inStock) ? '#2d5016' : '#999' %>;font-weight:600;cursor:<%= (product.stock > 0 && product.inStock) ? 'pointer' : 'not-allowed' %>;">
+              Default — ₹<%= product.price %> <%= (product.stock <= 0 || !product.inStock) ? '(OOS)' : '' %>
+            </button>
+            <% product.variants.forEach(function(v) { %>
+              <button type="button" class="variant-btn <%= v.stock <= 0 ? 'out-of-stock' : '' %>"
+                data-variant="<%= v.name %>"
+                data-price="<%= v.price %>"
+                data-original="<%= v.originalPrice || '' %>"
+                data-stock="<%= v.stock %>"
+                <%= v.stock <= 0 ? 'disabled' : '' %>
+                style="padding:10px 20px;border:2px solid #ddd;border-radius:8px;background:<%= v.stock <= 0 ? '#f9f9f9' : '#fff' %>;color:<%= v.stock <= 0 ? '#999' : '#333' %>;font-weight:600;cursor:<%= v.stock <= 0 ? 'not-allowed' : 'pointer' %>;">
+                <%= v.name %> — ₹<%= v.price %> <%= v.stock <= 0 ? '(OOS)' : '' %>
+              </button>
+            <% }); %>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Quantity & Add to Cart -->
+        <div class="product-actions">
+          <div class="quantity-control">
+            <button class="qty-btn" id="qtyMinus">−</button>
+            <input type="number" id="productQty" value="1" min="1" max="10" readonly />
+            <button class="qty-btn" id="qtyPlus">+</button>
+          </div>
+          <button class="btn btn-primary btn-lg add-to-cart-detail"
+            id="addToCartBtn"
+            data-id="<%= product._id %>"
+            data-name="<%= product.name %>"
+            data-price="<%= product.price %>"
+            data-image="<%= product.image %>"
+            data-variant=""
+            <%= (product.stock <= 0 || !product.inStock) ? 'disabled' : '' %>
+            style="<%= (product.stock <= 0 || !product.inStock) ? 'background:#ccc;cursor:not-allowed;' : '' %>">
+            <i class="fas fa-shopping-bag"></i> <%= (product.stock <= 0 || !product.inStock) ? 'Out of Stock' : 'Add to Cart' %>
+          </button>
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="trust-badges">
+          <div class="trust-badge">
+            <i class="fas fa-leaf"></i>
+            <span>100% Natural</span>
+          </div>
+          <div class="trust-badge">
+            <i class="fas fa-shield-alt"></i>
+            <span>Lab Tested</span>
+          </div>
+          <div class="trust-badge">
+            <i class="fas fa-truck"></i>
+            <span>Free Shipping</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Details Tabs -->
+    <div class="product-tabs">
+      <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="ingredients">Ingredients</button>
+        <button class="tab-btn" data-tab="benefits">Benefits</button>
+        <button class="tab-btn" data-tab="howto">How to Use</button>
+      </div>
+
+      <div class="tab-content active" id="tab-ingredients">
+        <div class="ingredients-grid">
+          <% product.ingredients.forEach(function(ingredient) { %>
+            <div class="ingredient-item">
+              <i class="fas fa-check"></i>
+              <span><%= ingredient %></span>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-benefits">
+        <div class="benefits-list">
+          <% product.benefits.forEach(function(benefit) { %>
+            <div class="benefit-item">
+              <i class="fas fa-star"></i>
+              <span><%= benefit %></span>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-howto">
+        <div class="howto-content">
+          <p><%= product.howToUse %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Products -->
+    <% if (related && related.length > 0) { %>
+      <div class="related-products">
+        <h2>You May Also Like</h2>
+        <div class="products-grid">
+          <% related.forEach(function(p) { %>
+            <div class="product-card">
+              <div class="product-card-image">
+                <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy" />
+                <div class="product-card-overlay">
+                  <a href="/products/<%= p.slug %>" class="btn btn-sm btn-white">View Details</a>
+                </div>
+              </div>
+              <div class="product-card-body">
+                <h3><a href="/products/<%= p.slug %>"><%= p.name %></a></h3>
+                <p><%= p.shortDescription %></p>
+                <div class="product-card-footer">
+                  <div class="product-price">
+                    <span class="price-current">₹<%= p.price %></span>
+                    <% if (p.originalPrice) { %>
+                      <span class="price-original">₹<%= p.originalPrice %></span>
+                    <% } %>
+                  </div>
+                  <button class="btn btn-primary btn-sm add-to-cart-btn"
+                    data-id="<%= p._id %>"
+                    data-name="<%= p.name %>"
+                    data-price="<%= p.price %>"
+                    data-image="<%= p.image %>">
+                    <i class="fas fa-plus"></i> Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<script>
+  // Product detail page specific JS
+  document.addEventListener('DOMContentLoaded', function() {
+    const qtyInput = document.getElementById('productQty');
+    const qtyMinus = document.getElementById('qtyMinus');
+    const qtyPlus = document.getElementById('qtyPlus');
+    const addBtn = document.getElementById('addToCartBtn');
+
+    qtyMinus.addEventListener('click', () => {
+      let val = parseInt(qtyInput.value);
+      if (val > 1) qtyInput.value = val - 1;
+    });
+
+    qtyPlus.addEventListener('click', () => {
+      let val = parseInt(qtyInput.value);
+      if (val < 10) qtyInput.value = val + 1;
+    });
+
+    addBtn.addEventListener('click', () => {
+      const qty = parseInt(qtyInput.value);
+      const variant = addBtn.dataset.variant || '';
+      const item = {
+        id: addBtn.dataset.id,
+        name: addBtn.dataset.name + (variant ? ' (' + variant + ')' : ''),
+        price: parseFloat(addBtn.dataset.price),
+        image: addBtn.dataset.image,
+        quantity: qty,
+        variant: variant,
+        productId: addBtn.dataset.id
+      };
+      addToCart(item);
+    });
+
+    // Variant selection
+    document.querySelectorAll('.variant-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.variant-btn').forEach(b => {
+          b.style.borderColor = '#ddd';
+          b.style.background = '#fff';
+          b.style.color = '#333';
+          b.classList.remove('active');
+        });
+        btn.style.borderColor = '#2d5016';
+        btn.style.background = '#f0fdf4';
+        btn.style.color = '#2d5016';
+        btn.classList.add('active');
+
+        // Update price display
+        const newPrice = btn.dataset.price;
+        const origPrice = btn.dataset.original;
+        const stock = btn.dataset.stock;
+        document.querySelector('.price-current').textContent = '₹' + newPrice;
+        if (origPrice && document.querySelector('.price-original')) {
+          document.querySelector('.price-original').textContent = '₹' + origPrice;
+          document.querySelector('.price-save').textContent = 'You save ₹' + (origPrice - newPrice);
+        }
+        document.getElementById('stockDisplay').textContent = stock + ' available';
+
+        // Update add-to-cart button data
+        addBtn.dataset.price = newPrice;
+        addBtn.dataset.variant = btn.dataset.variant || '';
+
+        // Update button state based on stock
+        if (parseInt(stock) <= 0) {
+          addBtn.disabled = true;
+          addBtn.style.background = '#ccc';
+          addBtn.style.cursor = 'not-allowed';
+          addBtn.innerHTML = '<i class="fas fa-shopping-bag"></i> Out of Stock';
+        } else {
+          addBtn.disabled = false;
+          addBtn.style.background = '';
+          addBtn.style.cursor = '';
+          addBtn.innerHTML = '<i class="fas fa-shopping-bag"></i> Add to Cart';
+        }
+      });
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>

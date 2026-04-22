@@ -1,0 +1,63 @@
+<%
+  var panelTitle = 'Admin — Products';
+  var panelRole = 'Admin';
+  var pageTitle = 'Product Management';
+  var sidebarLinks = [
+    { href: '/admin', icon: 'fa-tachometer-alt', label: 'Dashboard', key: 'dashboard' },
+    { href: '/admin/analytics', icon: 'fa-chart-line', label: 'Analytics', key: 'analytics' },
+    { href: '/admin/products', icon: 'fa-box', label: 'Products', key: 'products' },
+    { href: '/admin/orders', icon: 'fa-shopping-bag', label: 'Orders', key: 'orders' },
+    { href: '/admin/users', icon: 'fa-users', label: 'Users', key: 'users' }
+  ];
+%>
+<%- include('../partials/panel-header', { panelTitle, panelRole, pageTitle, sidebarLinks, page }) %>
+
+<div class="panel-card">
+  <div class="panel-card-header">
+    <h2><i class="fas fa-box"></i> All Products (<%= products.length %>)</h2>
+    <a href="/admin/products/add" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Add Product</a>
+  </div>
+  <% if (products.length === 0) { %>
+    <div class="panel-empty"><i class="fas fa-box-open"></i><p>No products. Add your first product!</p><a href="/admin/products/add" class="btn btn-primary">Add Product</a></div>
+  <% } else { %>
+    <div class="panel-table-wrap">
+      <table class="panel-table">
+        <thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% products.forEach(function(p) { %>
+            <tr>
+              <td><img src="<%= p.image %>" style="width:48px;height:48px;border-radius:8px;object-fit:cover;" /></td>
+              <td><strong><%= p.name %></strong><br><small style="color:#999"><%= p.weight %></small><% if(p.variants && p.variants.length > 0) { %><br><small style="color:#6b21a8;"><%= p.variants.length %> variant(s)</small><% } %></td>
+              <td>₹<%= p.price %> <% if(p.originalPrice){ %><br><small style="color:#999;text-decoration:line-through">₹<%= p.originalPrice %></small><% } %></td>
+              <td><strong style="color:<%= p.stock < 10 ? '#c62828' : '#2d5016' %>;"><%= p.stock %></strong><% if(p.stock < 10) { %> <span style="color:#c62828;font-size:0.75rem;">⚠️ Low</span><% } %></td>
+              <td><span class="badge badge-<%= p.inStock ? 'delivered' : 'cancelled' %>"><%= p.inStock ? 'In Stock' : 'Out of Stock' %></span></td>
+              <td class="actions">
+                <a href="/admin/products/edit/<%= p._id %>" class="btn btn-xs btn-outline"><i class="fas fa-edit"></i> Edit</a>
+                <button class="btn btn-xs btn-danger" onclick="confirmDelete('/admin/products/delete/<%= p._id %>', '<%= p.name %>')"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const toastType = params.get('toast');
+
+    if (toastType === 'product-added') {
+      showToast('Product added successfully.', 'success');
+    } else if (toastType === 'product-updated') {
+      showToast('Product updated successfully.', 'success');
+    }
+
+    if (toastType) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  });
+</script>
+
+<%- include('../partials/panel-footer') %>

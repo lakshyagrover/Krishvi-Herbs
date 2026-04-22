@@ -1,0 +1,166 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-bg">
+    <img src="/images/hero-banner.png" alt="Ayurvedic herbs and ingredients" />
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <span class="hero-badge animate-fade-in">🌿 100% Natural & Ayurvedic</span>
+    <h1 class="animate-slide-up">Ancient Herbs,<br>Modern Glow</h1>
+    <p class="hero-subtitle animate-slide-up delay-1">Handcrafted Ayurvedic skincare made with pure Tulsi, Mulethi & Rose — for skin that radiates naturally.</p>
+    <div class="hero-btns animate-slide-up delay-2">
+      <a href="/products" class="btn btn-primary btn-lg">Shop Now <i class="fas fa-arrow-right"></i></a>
+      <a href="#about" class="btn btn-outline btn-lg">Our Story</a>
+    </div>
+    <div class="hero-stats animate-fade-in delay-3">
+      <div class="stat">
+        <strong>100%</strong>
+        <span>Natural</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <strong>3+</strong>
+        <span>Products</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <strong>500+</strong>
+        <span>Happy Customers</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Strip -->
+<section class="features-strip">
+  <div class="container">
+    <div class="features-grid">
+      <div class="feature-item">
+        <i class="fas fa-leaf"></i>
+        <span>100% Natural</span>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-flask"></i>
+        <span>No Chemicals</span>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-hand-holding-heart"></i>
+        <span>Handcrafted</span>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-truck"></i>
+        <span>Free Delivery</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Products Section -->
+<section class="section products-section" id="products">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Our Collection</span>
+      <h2>Handcrafted with Love</h2>
+      <p>Each product is a blend of ancient Ayurvedic wisdom and modern skincare science.</p>
+    </div>
+    <div class="products-grid">
+      <% products.forEach(function(product) { %>
+        <div class="product-card" data-product-id="<%= product._id %>">
+          <div class="product-card-image">
+            <img src="<%= product.image %>" alt="<%= product.name %>" loading="lazy" />
+            <% if (product.originalPrice) { %>
+              <span class="product-badge">Save ₹<%= product.originalPrice - product.price %></span>
+            <% } %>
+            <div class="product-card-overlay">
+              <a href="/products/<%= product.slug %>" class="btn btn-sm btn-white">View Details</a>
+            </div>
+          </div>
+          <div class="product-card-body">
+            <h3><a href="/products/<%= product.slug %>"><%= product.name %></a></h3>
+            <p><%= product.shortDescription %></p>
+            <div class="product-card-footer">
+              <div class="product-price">
+                <span class="price-current">₹<%= product.price %></span>
+                <% if (product.originalPrice) { %>
+                  <span class="price-original">₹<%= product.originalPrice %></span>
+                <% } %>
+              </div>
+              <button class="btn btn-primary btn-sm add-to-cart-btn"
+                data-id="<%= product._id %>"
+                data-name="<%= product.name %>"
+                data-price="<%= product.price %>"
+                data-image="<%= product.image %>">
+                <i class="fas fa-plus"></i> Add
+              </button>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<!-- About Section -->
+<section class="section about-section" id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-content">
+        <span class="section-badge">Our Story</span>
+        <h2>Rooted in Ayurveda,<br>Made for You</h2>
+        <p>At Krishvi Herbs, we believe in the power of nature. Our products are born from ancient Ayurvedic formulations, carefully adapted for modern skincare needs.</p>
+        <p>Every ingredient is hand-selected, ethically sourced, and blended in small batches to ensure the highest quality. We use no chemicals, parabens, or artificial fragrances — just pure herbal goodness.</p>
+        <div class="about-features">
+          <div class="about-feature">
+            <i class="fas fa-seedling"></i>
+            <div>
+              <strong>Organic Ingredients</strong>
+              <span>Sourced from certified organic farms</span>
+            </div>
+          </div>
+          <div class="about-feature">
+            <i class="fas fa-mortar-pestle"></i>
+            <div>
+              <strong>Traditional Methods</strong>
+              <span>Hand-blended using Ayurvedic techniques</span>
+            </div>
+          </div>
+          <div class="about-feature">
+            <i class="fas fa-heart"></i>
+            <div>
+              <strong>Cruelty Free</strong>
+              <span>Never tested on animals</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="about-visual">
+        <div class="about-card">
+          <div class="about-card-icon"><i class="fas fa-spa"></i></div>
+          <h3>Pure & Potent</h3>
+          <p>Sun-dried herbs retain maximum nutrients for your skin.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon"><i class="fas fa-award"></i></div>
+          <h3>Lab Tested</h3>
+          <p>Every batch is tested for purity and safety.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-content">
+      <h2>Ready to Experience Nature's Best?</h2>
+      <p>Join 500+ happy customers who've made the switch to natural skincare.</p>
+      <a href="/products" class="btn btn-primary btn-lg">Explore Products <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

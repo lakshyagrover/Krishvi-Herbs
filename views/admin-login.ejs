@@ -1,0 +1,30 @@
+<%- include('partials/header') %>
+
+<div class="admin-login-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-icon"><i class="fas fa-lock"></i></div>
+      <h1>Admin Panel</h1>
+      <p>Enter admin password to continue</p>
+    </div>
+    <% if (error) { %>
+      <div class="admin-alert admin-alert-error"><i class="fas fa-times-circle"></i> <%= error %></div>
+    <% } %>
+    <form method="POST" action="/admin/login">
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required placeholder="Enter admin password" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Login</button>
+    </form>
+    <div class="auth-hint">
+      <i class="fas fa-info-circle"></i> Default password: <strong>krishvi2026</strong>
+    </div>
+  </div>
+</div>
+
+<style>
+  .admin-login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a3a0a, #2d5016); padding: 20px; }
+  .admin-alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+  .admin-alert-error { background: #fce4ec; color: #c62828; }
+</style>

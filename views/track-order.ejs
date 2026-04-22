@@ -1,0 +1,162 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fas fa-map-marker-alt"></i> Track Order</h1>
+  </div>
+</section>
+
+<section class="section tracking-section">
+  <div class="container">
+    <div class="tracking-card">
+      <!-- Order Info -->
+      <div class="tracking-header">
+        <div class="tracking-info-grid">
+          <div class="tracking-info-item">
+            <span class="label">Order ID</span>
+            <strong>#<%= order._id.toString().slice(-8).toUpperCase() %></strong>
+          </div>
+          <div class="tracking-info-item">
+            <span class="label">Tracking ID</span>
+            <strong><%= order.trackingId %></strong>
+          </div>
+          <div class="tracking-info-item">
+            <span class="label">Payment</span>
+            <span class="status-badge status-<%= order.paymentStatus %>">
+              <%= order.paymentStatus === 'cod' ? 'COD' : order.paymentStatus === 'paid' ? 'Paid' : 'Pending' %>
+            </span>
+          </div>
+          <div class="tracking-info-item">
+            <span class="label">Amount</span>
+            <strong>₹<%= order.totalAmount %></strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="tracking-timeline">
+        <h2>Order Status</h2>
+        <%
+          const statuses = [
+            { key: 'placed', label: 'Order Placed', icon: 'fa-box', desc: 'Your order has been placed successfully' },
+            { key: 'confirmed', label: 'Confirmed', icon: 'fa-check-circle', desc: 'Your order has been confirmed and is being processed' },
+            { key: 'shipped', label: 'Shipped', icon: 'fa-truck', desc: 'Your order is on its way' },
+            { key: 'out_for_delivery', label: 'Out for Delivery', icon: 'fa-motorcycle', desc: 'Your order is out for delivery' },
+            { key: 'delivered', label: 'Delivered', icon: 'fa-home', desc: 'Your order has been delivered' }
+          ];
+          const statusOrder = ['placed', 'confirmed', 'shipped', 'out_for_delivery', 'delivered'];
+          const currentIdx = statusOrder.indexOf(order.orderStatus);
+          const isCancelled = order.orderStatus === 'cancelled' || order.cancelled;
+        %>
+
+        <div class="timeline">
+          <% statuses.forEach(function(s, idx) { %>
+            <div class="timeline-step <%= !isCancelled && idx <= currentIdx ? 'completed' : '' %> <%= !isCancelled && idx === currentIdx ? 'current' : '' %>">
+              <div class="timeline-icon">
+                <i class="fas <%= s.icon %>"></i>
+              </div>
+              <div class="timeline-content">
+                <h4><%= s.label %></h4>
+                <p><%= s.desc %></p>
+                <% if (idx === 0) { %>
+                  <span class="timeline-date"><%= new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
+                <% } %>
+              </div>
+            </div>
+          <% }); %>
+
+          <% if (isCancelled) { %>
+            <div class="timeline-step cancelled current">
+              <div class="timeline-icon">
+                <i class="fas fa-times-circle"></i>
+              </div>
+              <div class="timeline-content">
+                <h4>Cancelled</h4>
+                <p><%= order.cancellationReason || 'Your order has been cancelled.' %></p>
+                <span class="timeline-date">
+                  Order cancelled
+                </span>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Shipping Address -->
+      <div class="tracking-address">
+        <h3><i class="fas fa-map-pin"></i> Shipping Address</h3>
+        <p>
+          <strong><%= order.shippingAddress.name %></strong><br>
+          <%= order.shippingAddress.address %><br>
+          <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %><br>
+          <i class="fas fa-phone"></i> +91 <%= order.shippingAddress.mobile %>
+        </p>
+      </div>
+
+      <!-- Items -->
+      <div class="tracking-items">
+        <h3><i class="fas fa-box-open"></i> Items</h3>
+        <% order.items.forEach(function(item) { %>
+          <div class="order-item-row">
+            <img src="<%= item.image %>" alt="<%= item.name %>" />
+            <div>
+              <p><%= item.name %></p>
+              <span>Qty: <%= item.quantity %> × ₹<%= item.price %></span>
+            </div>
+            <strong>₹<%= item.price * item.quantity %></strong>
+          </div>
+        <% }); %>
+      </div>
+
+      <div class="tracking-actions">
+        <% if (order.orderStatus === 'placed' || order.orderStatus === 'confirmed') { %>
+          <button class="btn btn-danger" onclick="cancelOrder('<%= order._id %>', this)">
+            <i class="fas fa-times"></i> Cancel Order
+          </button>
+        <% } %>
+        <a href="/my-orders" class="btn btn-outline"><i class="fas fa-arrow-left"></i> All Orders</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  async function cancelOrder(orderId, btn) {
+    const confirmed = await showConfirm({
+      title: 'Cancel Order?',
+      message: 'Are you sure you want to cancel this order? This action cannot be undone.',
+      confirmText: 'Yes, Cancel Order',
+      cancelText: 'No, Keep it'
+    });
+
+    if (!confirmed) return;
+    
+    // Add loading state
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+
+    try {
+      const res = await fetch('/order/cancel/' + orderId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Order cancelled successfully!', 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast(data.message || 'Failed to cancel order', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+      }
+    } catch (err) {
+      showToast('Error cancelling order', 'error');
+      btn.disabled = false;
+      btn.innerHTML = originalContent;
+    }
+  }
+</script>
+
+<%- include('partials/footer') %>

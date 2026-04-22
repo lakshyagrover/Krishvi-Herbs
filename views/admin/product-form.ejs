@@ -1,0 +1,125 @@
+<%
+  var panelTitle = product ? 'Edit Product' : 'Add Product';
+  var panelRole = 'Admin';
+  var pageTitle = product ? 'Edit Product' : 'Add New Product';
+  var baseUrl = '/admin';
+  var sidebarLinks = [
+    { href: '/admin', icon: 'fa-tachometer-alt', label: 'Dashboard', key: 'dashboard' },
+    { href: '/admin/analytics', icon: 'fa-chart-line', label: 'Analytics', key: 'analytics' },
+    { href: '/admin/products', icon: 'fa-box', label: 'Products', key: 'products' },
+    { href: '/admin/orders', icon: 'fa-shopping-bag', label: 'Orders', key: 'orders' },
+    { href: '/admin/users', icon: 'fa-users', label: 'Users', key: 'users' }
+  ];
+%>
+<%- include('../partials/panel-header', { panelTitle, panelRole, pageTitle, sidebarLinks, page }) %>
+
+<div class="panel-card">
+  <div class="panel-card-header">
+    <h2><i class="fas fa-<%= product ? 'edit' : 'plus' %>"></i> <%= pageTitle %></h2>
+    <a href="<%= baseUrl %>/products" class="btn btn-sm btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+  </div>
+  <div class="panel-card-body">
+    <form method="POST" action="<%= product ? baseUrl + '/products/edit/' + product._id : baseUrl + '/products' %>">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Product Name *</label>
+          <input type="text" name="name" required value="<%= product ? product.name : '' %>" placeholder="e.g. Tulsi Face Pack" />
+        </div>
+        <div class="form-group">
+          <label>Weight</label>
+          <input type="text" name="weight" value="<%= product ? product.weight : '100g' %>" placeholder="e.g. 100g" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Selling Price (₹) *</label>
+          <input type="number" name="price" required value="<%= product ? product.price : '' %>" placeholder="299" />
+        </div>
+        <div class="form-group">
+          <label>Original Price (₹)</label>
+          <input type="number" name="originalPrice" value="<%= product && product.originalPrice ? product.originalPrice : '' %>" placeholder="449" />
+        </div>
+        <div class="form-group">
+          <label>Stock Quantity *</label>
+          <input type="number" name="stock" required value="<%= product ? product.stock : 50 %>" placeholder="50" min="0" />
+          <% if (product && product.stock < 10) { %>
+            <div class="form-hint" style="color:#c62828;"><i class="fas fa-exclamation-triangle"></i> Low stock!</div>
+          <% } %>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Short Description *</label>
+        <input type="text" name="shortDescription" required value="<%= product ? product.shortDescription : '' %>" placeholder="One-line description" />
+      </div>
+      <div class="form-group">
+        <label>Full Description *</label>
+        <textarea name="description" rows="4" required placeholder="Detailed product description"><%= product ? product.description : '' %></textarea>
+      </div>
+      <div class="form-group">
+        <label>Ingredients (comma-separated)</label>
+        <input type="text" name="ingredients" value="<%= product ? product.ingredients.join(', ') : '' %>" placeholder="Tulsi Powder, Mulethi Root" />
+      </div>
+      <div class="form-group">
+        <label>Benefits (comma-separated)</label>
+        <input type="text" name="benefits" value="<%= product ? product.benefits.join(', ') : '' %>" placeholder="Glowing skin, Reduces dark spots" />
+      </div>
+      <div class="form-group">
+        <label>How to Use</label>
+        <textarea name="howToUse" rows="3" placeholder="Mix with rose water..."><%= product ? product.howToUse : '' %></textarea>
+      </div>
+      <div class="form-group">
+        <label>Image URL</label>
+        <input type="text" name="image" value="<%= product ? product.image : '/images/product-rose-glow.png' %>" placeholder="/images/product-name.png" />
+      </div>
+
+      <!-- Variants Section -->
+      <div class="panel-card" style="margin:20px 0;border:1px solid #e5e5e5;">
+        <div class="panel-card-header">
+          <h2 style="font-size:1rem;"><i class="fas fa-tags"></i> Product Variants (Optional)</h2>
+          <button type="button" class="btn btn-xs btn-primary" id="addVariantBtn"><i class="fas fa-plus"></i> Add Variant</button>
+        </div>
+        <div class="panel-card-body">
+          <p style="color:#999;font-size:0.85rem;margin-bottom:12px;">Add size variants like 50g, 100g, 200g with different prices and stock.</p>
+          <div id="variantsContainer">
+            <% if (product && product.variants && product.variants.length > 0) { %>
+              <% product.variants.forEach(function(v, i) { %>
+                <div class="variant-row" style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+                  <input type="text" name="variantNames" value="<%= v.name %>" placeholder="e.g. 50g" style="flex:1;" />
+                  <input type="number" name="variantPrices" value="<%= v.price %>" placeholder="Price" style="width:120px;" />
+                  <input type="number" name="variantStocks" value="<%= v.stock %>" placeholder="Stock" style="width:100px;" />
+                  <button type="button" class="btn btn-xs btn-danger" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+                </div>
+              <% }); %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <% if (product) { %>
+        <div class="form-group form-check">
+          <input type="checkbox" name="inStock" id="inStock" <%= product.inStock ? 'checked' : '' %> />
+          <label for="inStock" style="margin-bottom:0;">In Stock</label>
+        </div>
+      <% } %>
+      <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> <%= product ? 'Update Product' : 'Add Product' %></button>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.getElementById('addVariantBtn').addEventListener('click', function() {
+    const container = document.getElementById('variantsContainer');
+    const row = document.createElement('div');
+    row.className = 'variant-row';
+    row.style.cssText = 'display:flex;gap:10px;align-items:center;margin-bottom:10px;';
+    row.innerHTML = `
+      <input type="text" name="variantNames" placeholder="e.g. 200g" style="flex:1;" />
+      <input type="number" name="variantPrices" placeholder="Price (₹)" style="width:120px;" />
+      <input type="number" name="variantStocks" placeholder="Stock" style="width:100px;" value="50" />
+      <button type="button" class="btn btn-xs btn-danger" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+    `;
+    container.appendChild(row);
+  });
+</script>
+
+<%- include('../partials/panel-footer') %>

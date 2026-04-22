@@ -1,0 +1,46 @@
+<%
+  var displayName = user ? ((user.name && user.name.trim()) || user.email) : '';
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krishvi Herbs — <%= locals.panelTitle || 'Panel' %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/panel.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <i class="fas fa-leaf"></i>
+      <span>Krishvi Herbs</span>
+      <span class="role-badge"><%= locals.panelRole || 'Panel' %></span>
+    </div>
+    <nav class="sidebar-nav">
+      <% if (locals.sidebarLinks) { locals.sidebarLinks.forEach(function(link) { %>
+        <a href="<%= link.href %>" class="sidebar-link <%= (locals.page || '') === link.key ? 'active' : '' %>">
+          <i class="fas <%= link.icon %>"></i>
+          <span><%= link.label %></span>
+        </a>
+      <% }); } %>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+        <span><%= displayName %></span>
+      </div>
+      <a href="/" class="sidebar-link"><i class="fas fa-store"></i> <span>View Store</span></a>
+      <a href="/logout" class="sidebar-link"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
+  </aside>
+
+  <main class="panel-main">
+    <header class="panel-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+      <h1 class="panel-page-title"><%= locals.pageTitle || 'Dashboard' %></h1>
+      <div class="topbar-right">
+        <span class="topbar-user"><i class="fas fa-user-circle"></i> <%= displayName %> (<%= locals.panelRole || '' %>)</span>
+      </div>
+    </header>
+    <div class="panel-content">

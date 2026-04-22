@@ -1,0 +1,108 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fas fa-box"></i> My Orders</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <% if (orders.length === 0) { %>
+      <div class="cart-empty">
+        <div class="empty-icon">
+          <i class="fas fa-box-open"></i>
+        </div>
+        <h2>No orders yet</h2>
+        <p>Start shopping and your orders will appear here.</p>
+        <a href="/products" class="btn btn-primary">Shop Now</a>
+      </div>
+    <% } else { %>
+      <div class="orders-list">
+        <% orders.forEach(function(order) { %>
+          <div class="order-card">
+            <div class="order-card-header">
+              <div class="order-card-info">
+                <span class="order-id">#<%= order._id.toString().slice(-8).toUpperCase() %></span>
+                <span class="order-date"><%= new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></span>
+              </div>
+              <div class="order-card-status">
+                <span class="status-badge status-<%= order.orderStatus %>">
+                  <%= order.orderStatus.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
+                </span>
+                <span class="status-badge status-<%= order.paymentStatus %>">
+                  <%= order.paymentStatus === 'cod' ? 'COD' : order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                </span>
+              </div>
+            </div>
+            <div class="order-card-items">
+              <% order.items.forEach(function(item) { %>
+                <div class="order-card-item">
+                  <img src="<%= item.image %>" alt="<%= item.name %>" />
+                  <div>
+                    <p><%= item.name %></p>
+                    <span>Qty: <%= item.quantity %></span>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+            <div class="order-card-footer">
+              <span class="order-total">Total: ₹<%= order.totalAmount %></span>
+              <div class="order-card-actions">
+                <% if (order.orderStatus === 'placed' || order.orderStatus === 'confirmed') { %>
+                  <button class="btn btn-danger btn-sm" onclick="cancelOrder('<%= order._id %>', this)">
+                    <i class="fas fa-times"></i> Cancel
+                  </button>
+                <% } %>
+                <a href="/order/track/<%= order._id %>" class="btn btn-primary btn-sm">
+                  <i class="fas fa-map-marker-alt"></i> Track
+                </a>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<script>
+  async function cancelOrder(orderId, btn) {
+    const confirmed = await showConfirm({
+      title: 'Cancel Order?',
+      message: 'Are you sure you want to cancel this order? This action cannot be undone.',
+      confirmText: 'Yes, Cancel Order',
+      cancelText: 'No, Keep it'
+    });
+
+    if (!confirmed) return;
+    
+    // Add loading state
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+
+    try {
+      const res = await fetch('/order/cancel/' + orderId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Order cancelled successfully!', 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast(data.message || 'Failed to cancel order', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+      }
+    } catch (err) {
+      showToast('Error cancelling order', 'error');
+      btn.disabled = false;
+      btn.innerHTML = originalContent;
+    }
+  }
+</script>
+
+<%- include('partials/footer') %>

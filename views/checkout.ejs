@@ -1,0 +1,252 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<section class="page-header page-header-sm">
+  <div class="container">
+    <h1><i class="fas fa-credit-card"></i> Checkout</h1>
+  </div>
+</section>
+
+<section class="section checkout-section">
+  <div class="container">
+    <div class="checkout-grid">
+      <!-- Shipping Form -->
+      <div class="checkout-form">
+        <div class="checkout-card">
+          <h2><i class="fas fa-shipping-fast"></i> Shipping Details</h2>
+          <form id="checkoutForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="shipName">Full Name *</label>
+                <input type="text" id="shipName" required placeholder="Your full name" value="<%= profile?.name || user?.name || '' %>" />
+              </div>
+              <div class="form-group">
+                <label for="shipMobile">Mobile Number *</label>
+                <input type="tel" id="shipMobile" required placeholder="10-digit number" maxlength="10"
+                  value="<%= profile?.mobile || user?.mobile || '' %>" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="shipAddress">Address *</label>
+              <textarea id="shipAddress" required placeholder="House no, Street, Locality" rows="3"><%= profile?.address?.address || '' %></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="shipCity">City *</label>
+                <input type="text" id="shipCity" required placeholder="City" value="<%= profile?.address?.city || '' %>" />
+              </div>
+              <div class="form-group">
+                <label for="shipState">State *</label>
+                <input type="text" id="shipState" required placeholder="State" value="<%= profile?.address?.state || '' %>" />
+              </div>
+              <div class="form-group">
+                <label for="shipPincode">Pincode *</label>
+                <input type="text" id="shipPincode" required placeholder="6-digit" maxlength="6" value="<%= profile?.address?.pincode || '' %>" />
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="checkout-card">
+          <h2><i class="fas fa-wallet"></i> Payment Method</h2>
+          <div class="payment-options">
+            <label class="payment-option active">
+              <input type="radio" name="paymentMethod" value="cod" checked />
+              <div class="payment-option-content">
+                <i class="fas fa-money-bill-wave"></i>
+                <div>
+                  <strong>Cash on Delivery</strong>
+                  <span>Pay when you receive the order</span>
+                </div>
+              </div>
+            </label>
+            <% if (razorpayEnabled) { %>
+              <label class="payment-option">
+                <input type="radio" name="paymentMethod" value="razorpay" />
+                <div class="payment-option-content">
+                  <i class="fas fa-credit-card"></i>
+                  <div>
+                    <strong>Pay Online (Razorpay)</strong>
+                    <span>UPI, Card, Net Banking</span>
+                  </div>
+                </div>
+              </label>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="checkout-summary">
+        <div class="cart-summary-card">
+          <h3>Order Summary</h3>
+          <div class="checkout-items" id="checkoutItems">
+            <!-- Filled by JS -->
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span id="checkoutSubtotal">₹0</span>
+          </div>
+          <div class="summary-row">
+            <span>Shipping</span>
+            <span class="text-success">FREE</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-row summary-total">
+            <span>Total</span>
+            <span id="checkoutTotal">₹0</span>
+          </div>
+          <button class="btn btn-primary btn-block btn-lg" id="placeOrderBtn">
+            <span id="placeOrderText">Place Order (COD)</span>
+            <div class="btn-loader" style="display:none;"><i class="fas fa-spinner fa-spin"></i></div>
+          </button>
+          <p class="checkout-note"><i class="fas fa-lock"></i> Your data is secure and encrypted</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<% if (razorpayEnabled) { %>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<% } %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const cart = getCart();
+    if (cart.length === 0) {
+      window.location.href = '/cart';
+      return;
+    }
+
+    // Render checkout items
+    const checkoutItems = document.getElementById('checkoutItems');
+    checkoutItems.innerHTML = cart.map(item => `
+      <div class="checkout-item">
+        <img src="${item.image}" alt="${item.name}" />
+        <div>
+          <p class="checkout-item-name">${item.name}</p>
+          ${item.variant ? '<p class="checkout-item-qty" style="color:#2d5016;">Variant: ' + item.variant + '</p>' : ''}
+          <p class="checkout-item-qty">Qty: ${item.quantity}</p>
+        </div>
+        <span>₹${item.price * item.quantity}</span>
+      </div>
+    `).join('');
+
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    document.getElementById('checkoutSubtotal').textContent = '₹' + total;
+    document.getElementById('checkoutTotal').textContent = '₹' + total;
+
+    // Payment option toggle
+    document.querySelectorAll('.payment-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        const method = opt.querySelector('input').value;
+        document.getElementById('placeOrderText').textContent =
+          method === 'razorpay' ? 'Pay Now' : 'Place Order (COD)';
+      });
+    });
+
+    // Place Order
+    document.getElementById('placeOrderBtn').addEventListener('click', async () => {
+      const form = document.getElementById('checkoutForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const btn = document.getElementById('placeOrderBtn');
+      btn.querySelector('span').style.display = 'none';
+      btn.querySelector('.btn-loader').style.display = 'inline-block';
+      btn.disabled = true;
+
+      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+      const orderData = {
+        items: cart.map(item => ({
+          productId: item.productId || item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          variant: item.variant || null
+        })),
+        totalAmount: total,
+        shippingAddress: {
+          name: document.getElementById('shipName').value,
+          mobile: document.getElementById('shipMobile').value,
+          address: document.getElementById('shipAddress').value,
+          city: document.getElementById('shipCity').value,
+          state: document.getElementById('shipState').value,
+          pincode: document.getElementById('shipPincode').value
+        },
+        paymentMethod
+      };
+
+      try {
+        const res = await fetch('/order/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          showToast(data.message || 'Failed to create order', 'error');
+          btn.querySelector('span').style.display = 'inline';
+          btn.querySelector('.btn-loader').style.display = 'none';
+          btn.disabled = false;
+          return;
+        }
+
+        if (data.paymentMethod === 'razorpay' && data.razorpayOrder) {
+          // Open Razorpay
+          const options = {
+            key: '<%= razorpayKeyId %>',
+            amount: data.razorpayOrder.amount,
+            currency: 'INR',
+            name: 'Krishvi Herbs',
+            description: 'Order Payment',
+            order_id: data.razorpayOrder.id,
+            handler: async function(response) {
+              const verifyRes = await fetch('/order/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  orderId: data.orderId,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature
+                })
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyData.success) {
+                localStorage.removeItem('krishvi_cart');
+                window.location.href = '/order/success/' + verifyData.orderId;
+              } else {
+                showToast('Payment verification failed', 'error');
+              }
+            },
+            theme: { color: '#2d5016' }
+          };
+          const rzp = new Razorpay(options);
+          rzp.open();
+        } else {
+          // COD success
+          localStorage.removeItem('krishvi_cart');
+          window.location.href = '/order/success/' + data.orderId;
+        }
+      } catch (err) {
+        showToast('Something went wrong', 'error');
+      }
+
+      btn.querySelector('span').style.display = 'inline';
+      btn.querySelector('.btn-loader').style.display = 'none';
+      btn.disabled = false;
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>

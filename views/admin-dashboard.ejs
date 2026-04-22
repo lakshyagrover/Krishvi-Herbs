@@ -1,0 +1,141 @@
+<%- include('partials/header') %>
+
+<div class="admin-page">
+  <!-- Admin Navbar -->
+  <nav class="admin-nav">
+    <div class="admin-nav-inner">
+      <div class="admin-brand">
+        <i class="fas fa-leaf"></i> Krishvi Herbs <span class="admin-badge">Admin</span>
+      </div>
+      <div class="admin-nav-links">
+        <a href="/" target="_blank"><i class="fas fa-external-link-alt"></i> View Site</a>
+        <a href="/admin/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="admin-container">
+    <!-- Stats -->
+    <div class="admin-stats">
+      <div class="admin-stat-card">
+        <div class="stat-icon" style="background:#e8f5e0;color:#2d5016;"><i class="fas fa-rupee-sign"></i></div>
+        <div><span class="stat-value">₹<%= stats.revenue %></span><span class="stat-label">Total Revenue</span></div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="stat-icon" style="background:#fff3cd;color:#856404;"><i class="fas fa-box"></i></div>
+        <div><span class="stat-value"><%= stats.total %></span><span class="stat-label">Total Orders</span></div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="stat-icon" style="background:#cce5ff;color:#004085;"><i class="fas fa-clock"></i></div>
+        <div><span class="stat-value"><%= stats.placed %></span><span class="stat-label">New Orders</span></div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="stat-icon" style="background:#d4edda;color:#155724;"><i class="fas fa-check-circle"></i></div>
+        <div><span class="stat-value"><%= stats.delivered %></span><span class="stat-label">Delivered</span></div>
+      </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h2><i class="fas fa-list"></i> All Orders</h2>
+      </div>
+
+      <% if (orders.length === 0) { %>
+        <div class="admin-empty">
+          <i class="fas fa-inbox"></i>
+          <p>No orders yet. Orders will appear here when customers place them.</p>
+        </div>
+      <% } else { %>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Amount</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% orders.forEach(function(order) { %>
+                <tr>
+                  <td><strong>#<%= order._id.toString().slice(-8).toUpperCase() %></strong></td>
+                  <td>
+                    <div><%= order.shippingAddress.name %></div>
+                    <small style="color:#999;"><%= order.shippingAddress.mobile %></small>
+                  </td>
+                  <td><%= order.items.length %> item(s)</td>
+                  <td><strong>₹<%= order.totalAmount %></strong></td>
+                  <td><span class="status-badge status-<%= order.paymentStatus %>"><%= order.paymentStatus.toUpperCase() %></span></td>
+                  <td>
+                    <select class="admin-status-select" data-order-id="<%= order._id %>" onchange="updateStatus(this)">
+                      <% ['placed','confirmed','shipped','out_for_delivery','delivered'].forEach(function(s) { %>
+                        <option value="<%= s %>" <%= order.orderStatus === s ? 'selected' : '' %>><%= s.replace(/_/g,' ').replace(/\b\w/g, l=>l.toUpperCase()) %></option>
+                      <% }); %>
+                    </select>
+                  </td>
+                  <td><small><%= new Date(order.createdAt).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) %></small></td>
+                  <td><a href="/admin/order/<%= order._id %>" class="btn btn-sm btn-outline">View</a></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<style>
+  .admin-page { background: #f5f5f5; min-height: 100vh; }
+  .admin-nav { background: #1a3a0a; color: white; padding: 0 24px; height: 60px; display: flex; align-items: center; }
+  .admin-nav-inner { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; }
+  .admin-brand { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .admin-badge { background: #c8a951; color: #1a3a0a; font-size: 0.65rem; padding: 2px 8px; border-radius: 50px; font-family: 'Inter', sans-serif; font-weight: 700; text-transform: uppercase; }
+  .admin-nav-links { display: flex; gap: 16px; }
+  .admin-nav-links a { color: rgba(255,255,255,0.8); font-size: 0.85rem; transition: 0.3s; }
+  .admin-nav-links a:hover { color: white; }
+  .admin-container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .admin-stat-card { background: white; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  .stat-value { display: block; font-size: 1.4rem; font-weight: 700; color: #2c2c2c; }
+  .stat-label { font-size: 0.8rem; color: #999; }
+  .admin-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
+  .admin-card-header { padding: 20px 24px; border-bottom: 1px solid #eee; }
+  .admin-card-header h2 { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: #1a3a0a; display: flex; align-items: center; gap: 8px; }
+  .admin-empty { padding: 60px 24px; text-align: center; color: #999; }
+  .admin-empty i { font-size: 3rem; margin-bottom: 12px; display: block; }
+  .admin-table-wrap { overflow-x: auto; }
+  .admin-table { width: 100%; border-collapse: collapse; }
+  .admin-table th { text-align: left; padding: 12px 16px; font-size: 0.75rem; text-transform: uppercase; color: #999; letter-spacing: 0.5px; border-bottom: 1px solid #eee; }
+  .admin-table td { padding: 14px 16px; border-bottom: 1px solid #f5f5f5; font-size: 0.9rem; }
+  .admin-table tr:hover { background: #fafaf8; }
+  .admin-status-select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.8rem; background: white; cursor: pointer; }
+</style>
+
+<script>
+  async function updateStatus(select) {
+    const orderId = select.dataset.orderId;
+    const orderStatus = select.value;
+    try {
+      const res = await fetch('/admin/orders/' + orderId + '/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        select.style.borderColor = '#27ae60';
+        setTimeout(() => select.style.borderColor = '#ddd', 2000);
+      }
+    } catch (err) {
+      alert('Failed to update status');
+    }
+  }
+</script>
