@@ -1,49 +1,84 @@
-<%
-  var displayName = user ? ((user.name && user.name.trim()) || user.email) : '';
-%>
-<!-- Navbar -->
-<nav class="navbar" id="navbar">
-  <div class="nav-container">
-    <a href="/" class="nav-logo">
-      <i class="fas fa-leaf"></i>
-      <span>Krishvi Herbs</span>
-    </a>
+<% var displayName=user ? ((user.name && user.name.trim()) || user.email) : '' ; %>
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-logo">
+        <i class="fas fa-leaf"></i>
+        <span>Krishvi Herbs</span>
+      </a>
 
-    <ul class="nav-links" id="navLinks">
-      <li><a href="/">Home</a></li>
-      <li><a href="/products">Products</a></li>
-      <li><a href="/cart" class="nav-cart">
-        <i class="fas fa-shopping-bag"></i>
-        <span class="cart-badge" id="cartBadge">0</span>
-      </a></li>
-      <% if (user) { %>
-        <li class="nav-user-menu">
-          <button class="nav-user-btn" id="userMenuBtn">
-            <i class="fas fa-user-circle"></i>
-            <span><%= displayName %></span>
-            <i class="fas fa-chevron-down"></i>
-          </button>
-          <div class="nav-dropdown" id="userDropdown">
-            <% if (user.role === 'admin') { %>
-              <a href="/admin"><i class="fas fa-tachometer-alt"></i> Admin Panel</a>
-            <% } %>
-            <a href="/profile"><i class="fas fa-id-card"></i> My Profile</a>
-            <a href="/my-orders"><i class="fas fa-box"></i> My Orders</a>
-            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      <div class="nav-links" id="navLinks">
+        <!-- Sidebar Header (Mobile Only) -->
+        <div class="sidebar-header">
+          <div class="nav-logo">
+            <i class="fas fa-leaf"></i>
+            <span>Krishvi Herbs</span>
           </div>
-        </li>
-      <% } else { %>
-        <li><a href="/login" class="nav-login-btn"><i class="fas fa-user"></i> Login</a></li>
-      <% } %>
-    </ul>
+          <button class="sidebar-close" id="sidebarClose">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
 
-    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-  </div>
-</nav>
+        <ul class="nav-menu">
+          <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+          <li><a href="/products"><i class="fas fa-th-large"></i> Products</a></li>
+          <li><a href="/cart" class="nav-cart-link">
+              <i class="fas fa-shopping-bag"></i>
+              <span class="cart-text">Cart</span>
+              <span class="cart-badge" id="cartBadge">0</span>
+            </a></li>
+          
+          <li class="nav-divider"></li>
 
-<!-- Toast Container -->
-<div class="toast-container" id="toastContainer"></div>
+          <% if (user) { %>
+            <!-- Mobile User Info -->
+            <li class="nav-user-section mobile-only">
+              <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span><%= displayName %></span>
+              </div>
+              <div class="user-links">
+                <% if (user.role==='admin' ) { %>
+                  <a href="/admin"><i class="fas fa-tachometer-alt"></i> Admin Panel</a>
+                <% } %>
+                <a href="/profile"><i class="fas fa-id-card"></i> My Profile</a>
+                <a href="/my-orders"><i class="fas fa-box"></i> My Orders</a>
+                <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+              </div>
+            </li>
+
+            <!-- Desktop User Menu -->
+            <li class="nav-user-menu desktop-only">
+              <button class="nav-user-btn" id="userMenuBtn">
+                <i class="fas fa-user-circle"></i>
+                <span><%= displayName %></span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="nav-dropdown" id="userDropdown">
+                <% if (user.role==='admin' ) { %>
+                  <a href="/admin"><i class="fas fa-tachometer-alt"></i> Admin Panel</a>
+                <% } %>
+                <a href="/profile"><i class="fas fa-id-card"></i> My Profile</a>
+                <a href="/my-orders"><i class="fas fa-box"></i> My Orders</a>
+                <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+              </div>
+            </li>
+          <% } else { %>
+            <li><a href="/login" class="nav-login-btn"><i class="fas fa-sign-in-alt"></i> Login / Register</a></li>
+          <% } %>
+        </ul>
+      </div>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Mobile Nav Overlay -->
+  <div class="nav-overlay" id="navOverlay"></div>

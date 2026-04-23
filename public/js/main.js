@@ -90,7 +90,7 @@ function showConfirm(options = {}) {
     `;
 
     document.body.appendChild(modal);
-    
+
     // Animate in
     setTimeout(() => modal.classList.add('show'), 10);
 
@@ -109,20 +109,37 @@ function showConfirm(options = {}) {
 }
 
 // ─── Navbar ──────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   // Update cart badge on load
   updateCartBadge();
 
   // Mobile nav toggle
   const navToggle = document.getElementById('navToggle');
   const navLinks = document.getElementById('navLinks');
-  if (navToggle && navLinks) {
-    navToggle.addEventListener('click', () => {
+  const navOverlay = document.getElementById('navOverlay');
+  
+  if (navToggle && navLinks && navOverlay) {
+    const toggleMenu = () => {
       navLinks.classList.toggle('open');
-    });
+      navOverlay.classList.toggle('show');
+      document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
+    };
+
+    navToggle.addEventListener('click', toggleMenu);
+    navOverlay.addEventListener('click', toggleMenu);
+    
+    const sidebarClose = document.getElementById('sidebarClose');
+    if (sidebarClose) {
+      sidebarClose.addEventListener('click', toggleMenu);
+    }
+
     // Close on link click
     navLinks.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => navLinks.classList.remove('open'));
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        navOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+      });
     });
   }
 
@@ -149,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Add to cart buttons (product cards)
   document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
+    btn.addEventListener('click', function (e) {
       e.preventDefault();
       addToCart({
         id: this.dataset.id,
