@@ -161,7 +161,7 @@ select {
 }
 
 .sidebar-header,
-.nav-menu li a i:not(.fa-shopping-bag),
+.nav-menu > li > a > i:not(.fa-shopping-bag),
 .nav-divider,
 .user-info,
 .nav-user-section .user-links,
@@ -453,6 +453,7 @@ select {
     margin-bottom: 12px;
     color: var(--green-900);
     font-weight: 600;
+    text-decoration: none;
   }
 
   .user-info i {
@@ -474,6 +475,7 @@ select {
     color: var(--text-secondary);
     font-size: 0.95rem;
     transition: var(--transition);
+    text-decoration: none;
   }
 
   .user-links a i {

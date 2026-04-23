@@ -33,10 +33,10 @@
           <% if (user) { %>
             <!-- Mobile User Info -->
             <li class="nav-user-section mobile-only">
-              <div class="user-info">
+              <a href="/profile" class="user-info">
                 <i class="fas fa-user-circle"></i>
                 <span><%= displayName %></span>
-              </div>
+              </a>
               <div class="user-links">
                 <% if (user.role==='admin' ) { %>
                   <a href="/admin"><i class="fas fa-tachometer-alt"></i> Admin Panel</a>
