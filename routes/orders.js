@@ -204,6 +204,10 @@ router.post('/cancel/:id', requireAuth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    // Ownership check — only the order owner can cancel
+    if (order.userId.toString() !== req.session.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized to cancel this order' });
+    }
     if (order.orderStatus === 'shipped' || order.orderStatus === 'delivered') {
       return res.status(400).json({ success: false, message: 'Cannot cancel after shipping' });
     }
@@ -222,10 +226,14 @@ router.post('/cancel/:id', requireAuth, async (req, res) => {
 });
 
 // ─── Order Success Page ──────────────────────────────────
-router.get('/success/:id', async (req, res) => {
+router.get('/success/:id', requireAuth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).render('404');
+    // Ownership check — only the order owner can view success page
+    if (order.userId.toString() !== req.session.user._id.toString()) {
+      return res.status(403).render('403', { message: 'Not authorized to view this order' });
+    }
     res.render('order-success', { order });
   } catch (err) {
     res.status(500).send('Server error');
@@ -233,10 +241,14 @@ router.get('/success/:id', async (req, res) => {
 });
 
 // ─── Track Order Page ────────────────────────────────────
-router.get('/track/:id', async (req, res) => {
+router.get('/track/:id', requireAuth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).render('404');
+    // Ownership check — only the order owner can track their order
+    if (order.userId.toString() !== req.session.user._id.toString()) {
+      return res.status(403).render('403', { message: 'Not authorized to view this order' });
+    }
     res.render('track-order', { order });
   } catch (err) {
     res.status(500).send('Server error');
@@ -244,10 +256,15 @@ router.get('/track/:id', async (req, res) => {
 });
 
 // ─── Get Order Details (API) ─────────────────────────────
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ error: 'Order not found' });
+    // Ownership check — only the order owner or admin can view order details
+    if (order.userId.toString() !== req.session.user._id.toString()
+        && req.session.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Not authorized to view this order' });
+    }
     res.json(order);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
