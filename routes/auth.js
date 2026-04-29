@@ -106,6 +106,8 @@ const senderName = process.env.SMTP_FROM_NAME || 'Krishvi Herbs';
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.ethereal.email',
   port: process.env.SMTP_PORT || 587,
+  secure: false,   // ✅ required for port 587
+  family: 4,      
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
