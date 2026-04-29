@@ -103,11 +103,12 @@ const nodemailer = require('nodemailer');
 const senderEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@krishviherbs.com';
 const senderName = process.env.SMTP_FROM_NAME || 'Krishvi Herbs';
 // Configure your SMTP credentials here, or use ethereal for testing
+const smtpPort = Number(process.env.SMTP_PORT) || 587;
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-  port: process.env.SMTP_PORT || 587,
-  secure: false,   // ✅ required for port 587
-  family: 4,      
+  port: smtpPort,
+  secure: smtpPort === 465,   // true for port 465 (SSL), false for 587 (STARTTLS)
+  family: 4,                  // force IPv4 — Render doesn't support outbound IPv6
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
