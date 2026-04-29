@@ -98,22 +98,35 @@ function buildOtpEmail({ email, otp, userName }) {
   };
 }
 
-// ─── Setup Nodemailer (Mock or Real) ──────────────────────
-const nodemailer = require('nodemailer');
-const senderEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@krishviherbs.com';
+// ─── Setup SendGrid (HTTP-based email API — sends to real users) ───
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const senderEmail = process.env.SENDER_EMAIL || 'groverlakshya123@gmail.com';
 const senderName = process.env.SMTP_FROM_NAME || 'Krishvi Herbs';
-// Configure your SMTP credentials here, or use ethereal for testing
-const smtpPort = Number(process.env.SMTP_PORT) || 587;
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-  port: smtpPort,
-  secure: smtpPort === 465,   // true for port 465 (SSL), false for 587 (STARTTLS)
-  family: 4,                  // force IPv4 — Render doesn't support outbound IPv6
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
+
+// Helper: send email via SendGrid HTTP API
+async function sendEmailViaSendGrid({ to, subject, text, html }) {
+  const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: senderEmail, name: senderName },
+      subject,
+      content: [
+        { type: 'text/plain', value: text },
+        { type: 'text/html', value: html }
+      ]
+    })
+  });
+  if (!res.ok) {
+    const data = await res.text();
+    throw new Error(data);
   }
-});
+  return { success: true };
+}
 
 // ─── Send OTP ────────────────────────────────────────────
 router.post('/send-otp', async (req, res) => {
@@ -138,16 +151,16 @@ router.post('/send-otp', async (req, res) => {
     user.otpExpiry = otpExpiry;
     await user.save();
 
-    // Attempt to send email, but don't fail if SMTP is missing
-    if (process.env.SMTP_USER) {
+    // Send OTP email via SendGrid HTTP API
+    if (SENDGRID_API_KEY) {
       const emailContent = buildOtpEmail({ email, otp, userName: user.name });
-      await transporter.sendMail({
-        from: `"${senderName}" <${senderEmail}>`,
+      const result = await sendEmailViaSendGrid({
         to: email,
         subject: emailContent.subject,
         text: emailContent.text,
         html: emailContent.html
       });
+      console.log('📧 SendGrid response:', JSON.stringify(result));
     }
 
     res.json({ success: true, message: 'OTP sent successfully. Please check your email.' });
