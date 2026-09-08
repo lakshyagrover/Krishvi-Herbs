@@ -2,7 +2,7 @@
 
 Krishvi Herbs is a high-end, full-stack e-commerce platform dedicated to authentic Ayurvedic skincare. Built with modern web technologies, it offers a seamless shopping experience from product discovery to secure checkout and order tracking.
 
-![Krishvi Herbs Banner](https://raw.githubusercontent.com/lakshyagrover/Krishvi-Herbs/main/public/images/hero-banner.png) *(Note: Replace with your actual banner link)*
+![Krishvi Herbs Banner]
 
 ---
 
